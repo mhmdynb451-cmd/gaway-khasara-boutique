@@ -20,6 +20,7 @@ const CartCtx = createContext<CartState | null>(null);
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [auth, setAuth] = useState<AuthState>({ user: null, isAdmin: false, loading: true });
   const [items, setItems] = useState<CartItem[]>([]);
+  const [cartLoaded, setCartLoaded] = useState(false);
 
   useEffect(() => {
     const load = async (user: User | null) => {
@@ -36,26 +37,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
     try {
       const raw = localStorage.getItem("cart");
-      if (raw) setItems(JSON.parse(raw));
+      if (raw) {
+        const parsed: unknown = JSON.parse(raw);
+        if (Array.isArray(parsed)) setItems(parsed);
+      }
     } catch {}
+    setCartLoaded(true);
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  const save = (next: CartItem[]) => {
-    setItems(next);
-    localStorage.setItem("cart", JSON.stringify(next));
-  };
+  useEffect(() => {
+    if (!cartLoaded) return;
+    try { localStorage.setItem("cart", JSON.stringify(items)); } catch {}
+  }, [items, cartLoaded]);
 
   const cart: CartState = {
     items,
     add: (i, q = 1) => {
-      const ex = items.find((x) => x.product_id === i.product_id);
-      if (ex) save(items.map((x) => (x.product_id === i.product_id ? { ...x, quantity: Math.min(x.quantity + q, i.stock) } : x)));
-      else save([...items, { ...i, quantity: Math.min(q, i.stock) }]);
+      setItems((current) => {
+        const ex = current.find((x) => x.product_id === i.product_id);
+        if (ex) return current.map((x) => x.product_id === i.product_id ? { ...x, quantity: Math.min(x.quantity + q, i.stock) } : x);
+        return [...current, { ...i, quantity: Math.min(q, i.stock) }];
+      });
     },
-    setQty: (id, q) => save(items.map((x) => (x.product_id === id ? { ...x, quantity: Math.max(1, Math.min(q, x.stock)) } : x))),
-    remove: (id) => save(items.filter((x) => x.product_id !== id)),
-    clear: () => save([]),
+    setQty: (id, q) => setItems((current) => current.map((x) => (x.product_id === id ? { ...x, quantity: Math.max(1, Math.min(q, x.stock)) } : x))),
+    remove: (id) => setItems((current) => current.filter((x) => x.product_id !== id)),
+    clear: () => setItems([]),
     count: items.reduce((a, b) => a + b.quantity, 0),
     subtotal: items.reduce((a, b) => a + b.quantity * b.price, 0),
   };
@@ -68,7 +75,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 }
 
 export const useAuth = () => useContext(AuthCtx);
-export const useCart = () => useContext(CartCtx)!;
+export const useCart = () => {
+  const cart = useContext(CartCtx);
+  if (!cart) throw new Error("Cart requires StoreProvider");
+  return cart;
+};
 
 export const ORDER_STATUS: Record<string, string> = {
   new: "جديد", confirmed: "تم التأكيد", shipped: "تم الشحن", delivered: "تم التسليم", cancelled: "ملغي",

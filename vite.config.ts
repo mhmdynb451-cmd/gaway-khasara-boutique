@@ -7,6 +7,28 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
+  vite: {
+    optimizeDeps: {
+      // Prebundle administration controls with React before first navigation.
+      // Discovering them lazily can invalidate React's optimized module mid-session.
+      include: [
+        "react",
+        "react-dom",
+        "react-dom/client",
+        "react/jsx-runtime",
+        "react/jsx-dev-runtime",
+        "@radix-ui/react-tabs",
+        "@radix-ui/react-direction",
+        "@radix-ui/react-switch",
+        "@radix-ui/react-slot",
+        "@radix-ui/react-label",
+        "@radix-ui/react-checkbox",
+        "@radix-ui/react-select",
+        "@radix-ui/react-dialog",
+        "@radix-ui/react-tooltip",
+      ],
+    },
+  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this

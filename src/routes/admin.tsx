@@ -104,8 +104,8 @@ function ProductsAdmin() {
   };
   const del = async (id: string) => { if (!confirm("حذف المنتج؟")) return; await supabase.from("products").delete().eq("id", id); prods.refetch(); };
   return (
-    <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
-      <form onSubmit={save} className="h-fit space-y-2 rounded-lg border bg-card p-4">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <form onSubmit={save} className="h-fit min-w-0 space-y-2 rounded-lg border bg-card p-4">
         <h3 className="text-lg text-primary">{f.id ? "تعديل منتج" : "منتج جديد"}</h3>
         <Input required placeholder="اسم المنتج" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
         <Textarea placeholder="الوصف" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
@@ -123,11 +123,11 @@ function ProductsAdmin() {
         <label className="flex items-center gap-2 text-sm"><Switch checked={f.is_demo} onCheckedChange={(v) => setF({ ...f, is_demo: v })} />منتج تجريبي</label>
         <div className="flex gap-2"><Button type="submit">حفظ</Button>{f.id && <Button type="button" variant="ghost" onClick={() => setF(emptyP)}>إلغاء</Button>}</div>
       </form>
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-2">
         {prods.data?.map((p) => (
           <div key={p.id} className="flex items-center gap-3 rounded-lg border bg-card p-2 text-sm">
             {p.image_url && <img src={p.image_url} alt="" className="size-12 rounded object-cover" />}
-            <div className="flex-1">
+            <div className="min-w-0 flex-1 break-words">
               <p className="font-medium">{p.name} {p.is_demo && <span className="text-xs text-gold">(تجريبي)</span>} {!p.active && <span className="text-xs text-destructive">(مخفي)</span>}</p>
               <p className="text-muted-foreground">{formatEGP(p.price)} · مخزون {p.stock}</p>
             </div>
