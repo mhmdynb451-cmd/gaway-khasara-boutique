@@ -9,9 +9,9 @@ export function AddressForm({ userId, onSaved }: { userId: string; onSaved: () =
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value });
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!/^01[0-9]{9}$/.test(f.phone)) return toast.error("رقم الهاتف يجب أن يكون 11 رقمًا ويبدأ بـ 01");
+    if (!/^01[0-9]{9}$/.test(f.phone)) { toast.error("رقم الهاتف يجب أن يكون 11 رقمًا ويبدأ بـ 01"); return; }
     const { error } = await supabase.from("addresses").insert({ ...f, user_id: userId });
-    if (error) return toast.error("تعذّر حفظ العنوان");
+    if (error) { toast.error("تعذّر حفظ العنوان"); return; }
     toast.success("تم حفظ العنوان");
     setF({ recipient: "", phone: "", governorate: "", city: "", street: "", notes: "" });
     onSaved();

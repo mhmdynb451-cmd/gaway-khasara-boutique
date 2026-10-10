@@ -44,7 +44,7 @@ function OrderPage() {
 
   const submitRef = async () => {
     const { error } = await supabase.rpc("submit_payment_reference", { _order_id: o.id, _ref: ref.trim() });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("تم إرسال رقم العملية وسيتم التحقق منه");
     q.refetch();
   };
@@ -71,8 +71,8 @@ function OrderPage() {
         <R l={o.payment_method === "cod" ? "المقدّم" : "المبلغ المدفوع"} v={formatEGP(o.deposit_amount)} />
         {o.payment_method === "cod" && <R l="المتبقي عند الاستلام" v={formatEGP(o.remaining_amount)} b />}
         <hr />
-        <R l="طريقة الدفع" v={PAYMENT_METHOD[o.payment_method]} />
-        <R l="حالة الدفع" v={PAYMENT_STATUS[o.payment_status]} />
+        <R l="طريقة الدفع" v={PAYMENT_METHOD[o.payment_method] ?? ""} />
+        <R l="حالة الدفع" v={PAYMENT_STATUS[o.payment_status] ?? ""} />
         {o.payment_reference && <R l="رقم العملية" v={o.payment_reference} />}
         <p className="pt-2 text-muted-foreground">الشحن إلى: {o.recipient} — {o.governorate}، {o.city}، {o.street} — <span dir="ltr">{o.phone}</span></p>
       </div>

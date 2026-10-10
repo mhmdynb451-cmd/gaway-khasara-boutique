@@ -97,9 +97,9 @@ function ProductsAdmin() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     const row = { name: f.name, description: f.description, price: Number(f.price), compare_price: f.compare_price ? Number(f.compare_price) : null, stock: Math.max(0, parseInt(f.stock) || 0), image_url: f.image_url, category_id: f.category_id || null, active: f.active, is_demo: f.is_demo };
-    if (!(row.price >= 0) || !row.name) return toast.error("أدخل الاسم والسعر");
+    if (!(row.price >= 0) || !row.name) { toast.error("أدخل الاسم والسعر"); return; }
     const { error } = f.id ? await supabase.from("products").update(row).eq("id", f.id) : await supabase.from("products").insert(row);
-    if (error) return toast.error("تعذّر الحفظ");
+    if (error) { toast.error("تعذّر الحفظ"); return; }
     toast.success("تم الحفظ"); setF(emptyP); prods.refetch(); qc.invalidateQueries({ queryKey: ["products"] });
   };
   const del = async (id: string) => { if (!confirm("حذف المنتج؟")) return; await supabase.from("products").delete().eq("id", id); prods.refetch(); };
@@ -148,9 +148,9 @@ function CategoriesAdmin() {
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
     const slug = n.slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-");
-    if (!slug) return toast.error("أدخل معرّف الرابط بالإنجليزية");
+    if (!slug) { toast.error("أدخل معرّف الرابط بالإنجليزية"); return; }
     const { error } = await supabase.from("categories").insert({ ...n, slug, sort_order: (data?.length ?? 0) + 1 });
-    if (error) return toast.error("تعذّر الإضافة (قد يكون المعرّف مستخدمًا)");
+    if (error) { toast.error("تعذّر الإضافة (قد يكون المعرّف مستخدمًا)"); return; }
     setN({ name: "", slug: "", image_url: "" }); done();
   };
   const upd = async (id: string, patch: { name?: string; image_url?: string; active?: boolean; sort_order?: number }) => {
@@ -230,9 +230,9 @@ function SettingsAdmin() {
   const [s, setS] = useState({ cod_enabled: true, cod_deposit_type: "fixed", cod_deposit_value: "100", vodafone_enabled: false, vodafone_number: "" });
   useEffect(() => { if (data) setS({ cod_enabled: data.cod_enabled, cod_deposit_type: data.cod_deposit_type, cod_deposit_value: String(data.cod_deposit_value), vodafone_enabled: data.vodafone_enabled, vodafone_number: data.vodafone_number }); }, [data]);
   const save = async () => {
-    if (s.vodafone_enabled && !/^01[0-9]{9}$/.test(s.vodafone_number)) return toast.error("أدخل رقم فودافون كاش صحيحًا");
+    if (s.vodafone_enabled && !/^01[0-9]{9}$/.test(s.vodafone_number)) { toast.error("أدخل رقم فودافون كاش صحيحًا"); return; }
     const v = Number(s.cod_deposit_value);
-    if (!(v >= 0) || (s.cod_deposit_type === "percent" && v > 100)) return toast.error("قيمة المقدّم غير صحيحة");
+    if (!(v >= 0) || (s.cod_deposit_type === "percent" && v > 100)) { toast.error("قيمة المقدّم غير صحيحة"); return; }
     const { error } = await supabase.from("store_settings").update({ ...s, cod_deposit_value: v, updated_at: new Date().toISOString() }).eq("id", 1);
     error ? toast.error("تعذّر الحفظ") : (toast.success("تم الحفظ"), qc.invalidateQueries({ queryKey: ["settings"] }));
   };

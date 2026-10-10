@@ -50,15 +50,15 @@ function Checkout() {
   const totals = computeOrderTotals({ subtotal: cart.subtotal, shippingFee: Number(zone?.fee ?? 0), paymentMethod: method, depositType: (s?.cod_deposit_type as "fixed" | "percent") ?? "fixed", depositValue: Number(s?.cod_deposit_value ?? 0) });
 
   const place = async () => {
-    if (!addressId) return toast.error("أضف عنوان الشحن");
-    if (!zoneId) return toast.error("اختر منطقة الشحن");
+    if (!addressId) { toast.error("أضف عنوان الشحن"); return; }
+    if (!zoneId) { toast.error("اختر منطقة الشحن"); return; }
     setBusy(true);
     const { data, error } = await supabase.rpc("place_order", {
       _items: cart.items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })),
       _address_id: addressId, _zone_id: zoneId, _payment_method: method, _payment_reference: ref.trim(),
     });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     cart.clear();
     qc.invalidateQueries({ queryKey: ["products"] });
     toast.success("تم استلام طلبك");
