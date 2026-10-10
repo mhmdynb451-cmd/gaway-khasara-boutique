@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export function SiteLayout({ children }: { children: ReactNode }) {
-  const { user, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const { count } = useCart();
   const nav = useNavigate();
   const [q, setQ] = useState("");

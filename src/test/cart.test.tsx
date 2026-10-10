@@ -30,16 +30,18 @@ describe("Customer cart", () => {
     await waitFor(() => expect(JSON.parse(localStorage.getItem("cart") ?? "[]")).toHaveLength(1));
   });
 
-  it("retains rapid consecutive additions instead of losing updates", () => {
+  it("retains rapid consecutive additions instead of losing updates", async () => {
     const { cart } = mountCart();
+    await act(async () => {});
     act(() => { cart().add(product); cart().add(product); cart().add({ ...product, product_id: "second", price: 50 }); });
     expect(cart().count).toBe(3);
     expect(cart().subtotal).toBe(300);
     expect(cart().items).toHaveLength(2);
   });
 
-  it("automatically recalculates count and subtotal after quantity changes and removal", () => {
+  it("automatically recalculates count and subtotal after quantity changes and removal", async () => {
     const { cart } = mountCart();
+    await act(async () => {});
     act(() => cart().add(product));
     act(() => cart().setQty(product.product_id, 3));
     expect(cart().count).toBe(3);
