@@ -1,14 +1,40 @@
-# Welcome to your Lovable project
+# Gaway Khasara Boutique
+
+أنشئ متجرًا إلكترونيًا متكاملًا باسم «بيت الهدايا غاوي خسارة»، باللغة العربية بالكامل وباتجاه RTL، بتصميم كلاسيكي احترافي بألوان الكحلي والأبيض ولمسات ذهبية هادئة، متوافق مع هواتف أندرويد والكمبيوتر.
+
+
+
+المطلوب: واجهة رئيسية جذابة، بحث، أقسام ومنتجات بصور وأسعار ومخزون، سلة مشتريات، حسابات عملاء وعناوين شحن، إتمام الطلب، متابعة الطلبات، ولوحة إدارة آمنة لصاحب المتجر لإدارة الأقسام والمنتجات والأسعار والمخزون والطلبات ورسوم الشحن.
+
+
+
+اجعل الأقسام قابلة للإضافة والتعديل، وابدأ بأقسام الملابس الحريمي والرجالي والأطفال، والأحذية، ومستلزمات العرائس والمدارس، والهدايا والمنزل. استخدم منتجات تجريبية فقط قابلة للاستبدال، ولا تضف منتجات نهائية الآن.
+
+
+
+الدفع المطلوب: Visa وVodafone Cash والدفع عند الاستلام. في الدفع عند الاستلام، يجب أن يكون المبلغ المقدّم قابلًا للتحديد كمبلغ ثابت أو نسبة مئوية من إعدادات الإدارة، ويُخصم من إجمالي الطلب ولا يُضاف إليه. مثال: طلب بـ600 جنيه ومقدّم 100 جنيه، فيتبقى 500 جنيه عند الاستلام، مع إظهار الشحن بصورة منفصلة. لا تعتبر أي دفعة ناجحة دون تحقق فعلي، ولا تفعّل بوابات الدفع قبل استكمال الربط الآمن.
+
+
+
+استخدم قاعدة بيانات وخدمات خلفية حقيقية، مثل Supabase عند ملاءمتها، مع تسجيل دخول آمن وصلاحيات تفصل العملاء عن الإدارة، وحماية بياناتهم والأسعار والطلبات.
+
+
+
+أجّل بوت إدارة المنتجات وبوت خدمة العملاء بالكامل إلى مرحلة لاحقة، مع إبقاء إمكانية دمجهما مستقبلًا. لا تعدّل أي مشروع قديم ولا تحذفه.
+
+
+
+أنشئ تطبيقًا فعليًا وليس مجرد تصميم؛ اربط الوظائف الممكنة، واختبرها، ووضّح أي تكامل غير مكتمل أو يحتاج خدمة مدفوعة. جهّز الموقع للموبايل وإمكانية PWA، ووضّح متطلبات تحويله إلى APK مستقل عند الحاجة. لا تنفّذ أي اشتراكات أو مدفوعات حقيقية دون موافقتي.
 
 This project was built with [Lovable](https://lovable.dev).
 
 ## Build with Lovable
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/9e55d2bd-bda5-5de7-969f-b6e7ef1dcfe4).
 
 - **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
 
 ## Development
 
@@ -20,10 +46,3 @@ cd <repository-name>
 npm i
 npm run dev
 ```
-
-## Built with
-
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
