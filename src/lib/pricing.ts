@@ -11,10 +11,8 @@ export function computeOrderTotals(opts: {
   const total = round(opts.subtotal + opts.shippingFee);
   let deposit = total;
   if (opts.paymentMethod === "cod") {
-    deposit =
-      opts.depositType === "percent"
-        ? round((total * Math.min(opts.depositValue, 100)) / 100)
-        : Math.min(opts.depositValue, total);
+    // المقدّم = رسوم التوصيل الفعلية حسب المنطقة، ويُخصم من الإجمالي
+    deposit = opts.shippingFee;
   }
   return { subtotal: opts.subtotal, shippingFee: opts.shippingFee, total, deposit, remaining: round(total - deposit) };
 }

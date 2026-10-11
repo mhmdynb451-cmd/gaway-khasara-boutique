@@ -66,7 +66,7 @@ function Checkout() {
   };
 
   const methods: { id: Method; label: string; enabled: boolean; note: string }[] = [
-    { id: "cod", label: "الدفع عند الاستلام", enabled: !!s?.cod_enabled, note: "يُدفع مقدّم يُخصم من الإجمالي، والباقي عند الاستلام" },
+    { id: "cod", label: "الدفع عند الاستلام", enabled: !!s?.cod_enabled, note: "تُدفع رسوم التوصيل الفعلية مقدمًا حسب منطقتك، والباقي عند الاستلام" },
     { id: "vodafone", label: "فودافون كاش", enabled: !!s?.vodafone_enabled, note: s?.vodafone_enabled ? "حوّل المبلغ ثم أدخل رقم العملية للتحقق" : "غير مفعّل بعد" },
     { id: "visa", label: "فيزا / بطاقة بنكية", enabled: false, note: "قريبًا — بانتظار ربط بوابة دفع آمنة" },
   ];
@@ -127,7 +127,7 @@ function Checkout() {
         <Row label="رسوم الشحن" v={totals.shippingFee} />
         <Row label="الإجمالي" v={totals.total} bold />
         <hr />
-        <Row label={method === "cod" ? "المقدّم المطلوب الآن" : "المطلوب دفعه"} v={totals.deposit} />
+        <Row label={method === "cod" ? "رسوم التوصيل المطلوبة الآن" : "المطلوب دفعه"} v={totals.deposit} />
         {method === "cod" && <Row label="المتبقي عند الاستلام" v={totals.remaining} bold />}
         <Button className="mt-3 w-full" size="lg" disabled={busy} onClick={place}>تأكيد الطلب</Button>
         <p className="text-xs text-muted-foreground">لا يُعتبر أي دفع مكتملًا إلا بعد تحقق المتجر منه.</p>
