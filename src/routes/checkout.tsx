@@ -52,6 +52,62 @@ function Checkout() {
   const place = async () => {
     if (!addressId) { toast.error("أضف عنوان الشحن"); return; }
     if (!zoneId) { toast.error("اختر منطقة الشحن"); return; }
+
+    // If the user selected Visa, initialize Paymob checkout via the Supabase Edge Function
+    if (method === "visa") {
+      setBusy(true);
+      try {
+        const addr = addresses.data?.find((a: any) => a.id === addressId);
+        const billing_data = {
+          name: addr?.recipient ?? user.email ?? "",
+          email: user.email ?? "",
+          phone: addr?.phone ?? (user as any)?.phone ?? "",
+          city: addr?.city ?? "",
+          governorate: addr?.governorate ?? "",
+          street: addr?.street ?? "",
+        };
+
+        const body = { amount: totals.total, currency: "EGP", billing_data };
+        const res = await supabase.functions.invoke("paymob-checkout", { body: JSON.stringify(body) });
+
+        setBusy(false);
+
+        if (res.error) {
+          toast.error(res.error.message ?? "فشل تهيئة صفحة الدفع");
+          return;
+        }
+
+        // Try to extract URL from response in several common shapes
+        let url: string | undefined;
+        if (res.data) {
+          if (typeof res.data === "string") {
+            try {
+              const parsed = JSON.parse(res.data);
+              url = parsed.checkout_url || parsed.url || parsed.payment_url || parsed.redirect_url;
+            } catch (e) {
+              if (res.data.startsWith("http")) url = res.data;
+            }
+          } else if (typeof res.data === "object") {
+            url = (res.data as any).checkout_url || (res.data as any).url || (res.data as any).payment_url || (res.data as any).redirect_url;
+          }
+        }
+
+        if (!url) {
+          toast.error("لم نستلم رابط سلة الدفع، حاول مرة أخرى");
+          return;
+        }
+
+        // Redirect the user to Paymob checkout
+        window.location.href = url;
+        return;
+      } catch (err: any) {
+        setBusy(false);
+        toast.error(err?.message ?? "حدث خطأ أثناء تهيئة الدفع. تحقق من اتصالك وحاول مرة أخرى.");
+        return;
+      }
+    }
+
+    // legacy / server-side place order for non-visa methods
     setBusy(true);
     const { data, error } = await supabase.rpc("place_order", {
       _items: cart.items.map((i) => ({ product_id: i.product_id, quantity: i.quantity })),
@@ -67,8 +123,8 @@ function Checkout() {
 
   const methods: { id: Method; label: string; enabled: boolean; note: string }[] = [
     { id: "cod", label: "الدفع عند الاستلام", enabled: !!s?.cod_enabled, note: "تُدفع رسوم التوصيل الفعلية مقدمًا حسب منطقتك، والباقي عند الاستلام" },
-    { id: "vodafone", label: "فودافون كاش", enabled: !!s?.vodafone_enabled, note: s?.vodafone_enabled ? "حوّل المبلغ ثم أدخل رقم العملية للتحقق" : "غير مفعّل بعد" },
-    { id: "visa", label: "فيزا / بطاقة بنكية", enabled: false, note: "قريبًا — بانتظار ربط بوابة دفع آمنة" },
+    { id: "vodafone", label: "فودافون كاش", enabled: !!s?.vodafone_enabled, note: s?.vodafone_enabled ? "حوّل المبلغ ثم أدخل رقم العملية للتحقق" : "غير متوفرة حالياً" },
+    { id: "visa", label: "فيزا / بطاقة بنكية", enabled: (s?.visa_enabled ?? true) as boolean, note: "ادفع الآن عبر بطاقة بنكية" },
   ];
 
   return (
@@ -110,7 +166,7 @@ function Checkout() {
           </div>
           {totals.deposit > 0 && s?.vodafone_enabled && (
             <div className="mt-3 rounded-lg bg-gold-soft p-3 text-sm">
-              <p>حوّل <b>{formatEGP(totals.deposit)}</b> على فودافون كاش رقم <b dir="ltr">{s.vodafone_number}</b> ثم أدخل رقم العملية (يمكنك إضافته لاحقًا من صفحة الطلب).</p>
+              <p>حوّل <b>{formatEGP(totals.deposit)}</b> على فودافون كاش رقم <b dir="ltr">{s.vodafone_number}</b> ثم أدخل رقم العملية (يمكنك إضافته لاحقًا). </p>
               <Input className="mt-2 bg-card" placeholder="رقم عملية التحويل" value={ref} onChange={(e) => setRef(e.target.value)} />
             </div>
           )}
