@@ -20,10 +20,14 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Setup Android SDK and Accept Licenses
-        uses: android-actions/setup-android@v3
-        with:
-          accept-android-sdk-licenses: true
+      - name: Accept Android SDK Licenses
+        run: |
+          mkdir -p $ANDROID_HOME/licenses
+          echo -e "\n24333f8a637b3749d10e3b79793cd54617873e98" > $ANDROID_HOME/licenses/android-sdk-license
+          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > $ANDROID_HOME/licenses/android-sdk-preview-license
+          echo -e "\nd9760cb00964c8d8b93d0f0310237ee3d997f748" > $ANDROID_HOME/licenses/android-googletv-license
+          echo -e "\n6010077a9a16f4ef884a01f16c12741a953d437b" > $ANDROID_HOME/licenses/google-gdk-license
+          echo -e "\ne9ac3510e14a242f3607fc8a529323eb7dd47294" > $ANDROID_HOME/licenses/mips-android-sysimage-license
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
