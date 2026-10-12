@@ -26,7 +26,7 @@ export function SiteLayout({ children }: { children: ReactNode }) {
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث عن منتج..." className="bg-background text-foreground pr-9" />
             <Search className="absolute right-3 top-2.5 size-4 text-muted-foreground" />
           </form>
-          {isAdmin && <Button asChild variant="ghost" size="sm" className="mr-auto shrink-0 text-gold hover:bg-sidebar-accent hover:text-gold"><Link to="/admin" aria-label="لوحة الإدارة"><Shield />الإدارة</Link></Button>}
+          {isAdmin && <Button asChild variant="ghost" size="sm" className="mr-auto shrink-0 text-gold hover:bg-sidebar-accent hover:text-gold"><Link to="/admin" aria-label="لوحة الإدارة" className="">لوحة الإدارة</Link></Button>}
         </div>
         <form onSubmit={submit} className="relative px-4 pb-3 md:hidden">
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث عن منتج..." className="bg-background text-foreground pr-9" />
