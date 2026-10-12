@@ -18,21 +18,12 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: 17
 
-      - name: Setup Android SDK
+      - name: Setup Android SDK and Accept Licenses
         uses: android-actions/setup-android@v3
-
-      - name: Accept All Android SDK Licenses
-        run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses || true
-          mkdir -p "$ANDROID_HOME/licenses"
-          echo -e "\n24333f8a637b3749d10e3b79793cd54617873e98\n89330d222604205701narrow2308670891a0c8b65786" > "$ANDROID_HOME/licenses/android-sdk-license"
-          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
-          echo -e "\nd976narrow2308670891a0c8b65786\n3b357ab9a5b106206709459aa7073200b40939f2" > "$ANDROID_HOME/licenses/android-googletv-license"
-          echo -e "\n6010077narrow2308670891a0c8b65786\n33b622f7narrow2308670891a0c8b65786" > "$ANDROID_HOME/licenses/google-gdk-license"
-          echo -e "\ne96narrow2308670891a0c8b65786\ne284narrow2308670891a0c8b65786" > "$ANDROID_HOME/licenses/mips-android-sysimage-license"
+        with:
+          accept-android-sdk-licenses: true
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
@@ -45,7 +36,9 @@ jobs:
 
       - name: Build debug APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
