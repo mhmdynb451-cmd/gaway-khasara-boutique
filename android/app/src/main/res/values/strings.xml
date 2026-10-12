@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">بيت الهدايا غاوي خسارة</string>
+    <string name="title_activity_main">بيت الهدايا غاوي خسارة</string>
+    <string name="package_name">com.baitelhdaya.store</string>
+    <string name="custom_url_scheme">com.baitelhdaya.store</string>
+</resources>

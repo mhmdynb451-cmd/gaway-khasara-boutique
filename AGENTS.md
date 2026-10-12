@@ -13,3 +13,4 @@
 - Use /categories as the category directory and keep /category/$slug for each category's products, preserving existing URLs and data.
 - Update cart state functionally and persist it after hydration so rapid actions retain every quantity update without overwriting the saved cart during startup.
 - Prebundle React and Radix administration controls together in Vite so first-time navigation does not invalidate React's optimized modules mid-session and cause invalid hook calls.
+- APK build: Capacitor wrapper (android/ committed) loads the live app via server.url in capacitor.config.ts; GitHub Actions workflow .github/workflows/android-apk.yml builds app-debug.apk as an artifact. Why: TanStack Start is SSR, so the native shell points at the hosted app instead of bundling a static build.
