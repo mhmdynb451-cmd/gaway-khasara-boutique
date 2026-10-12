@@ -25,9 +25,10 @@ jobs:
       - name: Accept Android SDK licenses and install required packages
         shell: bash
         run: |
-          set +o pipefail
-          yes | sdkmanager --licenses > /dev/null
-          yes | sdkmanager "platform-tools" "platforms;android-36" "build-tools;35.0.0" > /dev/null
+          mkdir -p ~/.android
+          touch ~/.android/repositories.cfg
+          yes | sdkmanager --licenses || true
+          yes | sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" || true
           sdkmanager --list_installed
 
       - name: Install dependencies
@@ -36,7 +37,7 @@ jobs:
       - name: Prepare web dir and sync Capacitor
         run: |
           mkdir -p dist
-          echo '<!doctype html><html><head><meta http-equiv="refresh" content="0;url=https://id-preview--9e55d2bd-bda5-5de7-969f-b6e7ef1dcfe4.lovable.app"></head><body></body></html>' > dist/index.html
+          echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=https://id-preview--9e5562bd-b6a3-43da-8e7d-cb091a18ee43.lovable.app/"></head><body></body></html>' > dist/index.html
           npx cap sync android
 
       - name: Build debug APK
@@ -48,3 +49,4 @@ jobs:
         with:
           name: bait-elhdaya-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          
