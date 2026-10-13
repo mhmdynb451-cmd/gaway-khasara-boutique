@@ -1,9 +1,12 @@
-import { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from "@capacitor/cli";
 
+// الغلاف الأصلي يعرض نسخة الويب المنشورة للمتجر.
+// عند نشر المتجر على رابط نهائي، حدّث server.url إلى الرابط النهائي.
 const config: CapacitorConfig = {
-  appId: 'app.lovable.a18ee43',
-  appName: 'بيت الهدايا غاوي خسارة',
-  webDir: 'dist'
+  appId: "com.baitelhdaya.store",
+  appName: "بيت الهدايا غاوي خسارة",
+  webDir: "dist",
+  android: { allowMixedContent: false },
 };
 
 export default config;
