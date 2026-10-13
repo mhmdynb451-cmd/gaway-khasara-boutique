@@ -1,11 +1,11 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.baitelhdaya.store',
+  appId: 'app.lovable.a18ee43',
   appName: 'بيت الهدايا غاوي خسارة',
   webDir: 'dist',
-  android: {
-    allowMixedContent: false
+  server: {
+    androidScheme: 'https'
   }
 };
 
