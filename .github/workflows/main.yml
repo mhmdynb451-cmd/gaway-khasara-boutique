@@ -48,6 +48,46 @@ jobs:
           # update native plugins/config (will generate capacitor config under android assets if needed)
           npx cap sync android
 
+      - name: CI sanity checks for Android asset bundle
+        run: |
+          set -e
+          TARGET=android/app/src/main/assets/public
+          echo "Checking $TARGET/index.html exists..."
+          if [ ! -f "$TARGET/index.html" ]; then
+            echo "ERROR: index.html missing in $TARGET"
+            ls -la "$TARGET"
+            exit 1
+          fi
+          echo "Inspecting first 120 lines of index.html..."
+          sed -n '1,120p' "$TARGET/index.html"
+          echo "Looking for absolute root asset paths (href=\"/ or src=\"/) in index.html..."
+          if grep -nE 'href="/|src="/' "$TARGET/index.html"; then
+            echo "ERROR: Found absolute root asset path(s) in index.html — convert them to relative paths or ensure vite base is './'"
+            exit 1
+          fi
+          echo "Ensuring assets directory exists and contains files..."
+          if [ ! -d "$TARGET/assets" ] || [ -z "$(ls -A $TARGET/assets 2>/dev/null)" ]; then
+            echo "ERROR: assets/ missing or empty in $TARGET"
+            ls -la "$TARGET"
+            exit 1
+          fi
+          echo "Checking manifest and icons exist..."
+          for f in manifest.webmanifest favicon.ico icon-192.png icon-512.png; do
+            if [ ! -f "$TARGET/$f" ]; then
+              echo "ERROR: $f not found in $TARGET"
+              ls -la "$TARGET"
+              exit 1
+            fi
+          done
+          if [ -f android/app/src/main/assets/capacitor.config.json ]; then
+            echo "Checking generated capacitor config for server.url ..."
+            if grep -q '"server"' android/app/src/main/assets/capacitor.config.json; then
+              echo "ERROR: Found a server block in generated capacitor.config.json — remove server.url from source capacitor.config.ts and re-run cap sync"
+              exit 1
+            fi
+          fi
+          echo "All CI sanity checks passed."
+
       - name: Build Debug APK
         run: |
           cd android
