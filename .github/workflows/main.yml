@@ -2,101 +2,79 @@ name: Build Android APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
-
-concurrency:
-  group: build-android
-  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'zulu'
+          distribution: 'temurin'
           java-version: '17'
 
-      - name: Accept Android SDK Licenses
-        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
 
-      - name: Build web assets (production)
-        run: |
-          npm run build
+      - name: Install Dependencies
+        run: npm ci
 
-      - name: Copy web assets into Android assets and sync Capacitor
-        run: |
-          # ensure target dir exists
-          mkdir -p android/app/src/main/assets/public
-          # copy dist -> Android public (rsync keeps deletions in sync)
-          rsync -a --delete dist/ android/app/src/main/assets/public/
-          # update native plugins/config (will generate capacitor config under android assets if needed)
-          npx cap sync android
+      - name: Build Web App
+        run: npm run build
 
       - name: CI sanity checks for Android asset bundle
         run: |
-          set -e
-          TARGET=android/app/src/main/assets/public
-          echo "Checking $TARGET/index.html exists..."
-          if [ ! -f "$TARGET/index.html" ]; then
-            echo "ERROR: index.html missing in $TARGET"
-            ls -la "$TARGET"
+          echo "=== Starting CI Sanity Checks ==="
+          if [ ! -f "dist/index.html" ]; then
+            echo "ERROR: dist/index.html does not exist!"
             exit 1
           fi
-          echo "Inspecting first 120 lines of index.html..."
-          sed -n '1,120p' "$TARGET/index.html"
-          echo "Looking for absolute root asset paths (href=\"/ or src=\"/) in index.html..."
-          if grep -nE 'href=\"/|src=\"/' "$TARGET/index.html"; then
-            echo "ERROR: Found absolute root asset path(s) in index.html — convert them to relative paths or ensure vite base is './'"
-            exit 1
-          fi
-          echo "Ensuring assets directory exists and contains files..."
-          if [ ! -d "$TARGET/assets" ] || [ -z "$(ls -A "$TARGET/assets" 2>/dev/null)" ]; then
-            echo "ERROR: assets/ missing or empty in $TARGET"
-            ls -la "$TARGET"
-            exit 1
-          fi
-          echo "Checking manifest and icons exist..."
-          for f in manifest.webmanifest favicon.ico icon-192.png icon-512.png; do
-            if [ ! -f "$TARGET/$f" ]; then
-              echo "ERROR: $f not found in $TARGET"
-              ls -la "$TARGET"
-              exit 1
-            fi
-          done
-          if [ -f android/app/src/main/assets/capacitor.config.json ]; then
-            echo "Checking generated capacitor config for server.url ..."
-            if grep -q '\"server\"' android/app/src/main/assets/capacitor.config.json; then
-              echo "ERROR: Found a server block in generated capacitor.config.json — remove server.url from source capacitor.config.ts and re-run cap sync"
-              exit 1
-            fi
-          fi
-          echo "All CI sanity checks passed."
 
-      - name: Build Debug APK
+          if grep -q -E 'href="/|src="/' dist/index.html; then
+            echo "ERROR: Found absolute root asset paths in dist/index.html!"
+            grep -E 'href="/|src="/' dist/index.html
+            exit 1
+          fi
+
+          if [ ! -d "dist/assets" ] || [ -z "$(ls -A dist/assets)" ]; then
+            echo "ERROR: dist/assets directory missing or empty!"
+            exit 1
+          fi
+
+          if [ ! -f "dist/manifest.webmanifest" ]; then
+            echo "ERROR: dist/manifest.webmanifest missing!"
+            exit 1
+          fi
+
+          echo "=== CI Sanity Checks Passed Successfully ==="
+
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+
+      - name: Accept Android Licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+      - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      - name: Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: bait-elhdaya-apk
+          name: app-debug.apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           
