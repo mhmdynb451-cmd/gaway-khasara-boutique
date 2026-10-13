@@ -15,7 +15,7 @@ export type CartItem = {
   product_id: string;
   name: string;
   price: number;
-  image_url?: string;
+  image_url: string;
   stock: number;
   quantity: number;
 };
@@ -44,7 +44,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [cartLoaded, setCartLoaded] = useState(false);
 
-  // Load auth and cart on startup, subscribe to auth changes
   useEffect(() => {
     let mounted = true;
 
@@ -66,7 +65,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
 
     // initial getUser
-    supabase.auth.getUser().then(({ data }) => loadAuth(data?.user ?? null)).catch(() => loadAuth(null));
+    supabase.auth
+      .getUser()
+      .then(({ data }) => loadAuth(data?.user ?? null))
+      .catch(() => loadAuth(null));
 
     // subscribe to auth changes
     const resp = supabase.auth.onAuthStateChange((_event, session) => {
@@ -96,15 +98,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           try {
             (resp as any).data?.subscription?.unsubscribe?.();
           } catch {
-            // second-layer guard
+            // ignore
           }
         } else if (resp && typeof (resp as any).unsubscribe === "function") {
           try {
             (resp as any).unsubscribe();
-          } catch {}
+          } catch {
+            // ignore
+          }
         }
       } catch {
-        // swallow any cleanup error
+        // swallow any unexpected cleanup error
       }
     };
   }, []);
@@ -163,4 +167,28 @@ export const useCart = () => {
   if (!ctx) throw new Error("useCart must be used within StoreProvider");
   return ctx;
 };
-      
+
+/**
+ * Order & Payment constants (exported for admin/checkout)
+ */
+export const ORDER_STATUS: Record<string, string> = {
+  new: "جديد",
+  confirmed: "تم التأكيد",
+  shipped: "تم الشحن",
+  delivered: "تم التسليم",
+  cancelled: "ملغي",
+};
+
+export const PAYMENT_STATUS: Record<string, string> = {
+  pending: "بانتظار الدفع",
+  awaiting_verification: "بانتظار التحقق",
+  verified: "تم التحقق",
+  failed: "مرفوض",
+};
+
+export const PAYMENT_METHOD: Record<string, string> = {
+  cod: "الدفع عند الاستلام",
+  vodafone: "فودافون كاش",
+  visa: "فيزا",
+};
+    
