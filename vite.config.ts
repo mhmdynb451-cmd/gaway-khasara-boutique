@@ -1,13 +1,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath, URL } from "url";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 
-// Fix for ESM: __dirname is not defined when using 'type: "module"' in package.json.
-// Use fileURLToPath(import.meta.url) to derive a proper __dirname for path.resolve.
+// Robust ESM dirname/paths: derive paths from import.meta.url using URL + fileURLToPath
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const srcDir = fileURLToPath(new URL("./src", import.meta.url));
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -18,7 +18,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      // Use a URL-derived path for the alias to avoid environments where __dirname may be undefined
+      "@": srcDir,
     },
   },
   build: {
