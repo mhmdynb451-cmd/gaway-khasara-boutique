@@ -1,88 +1,166 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export interface CartItem {
+/**
+ * Auth context
+ */
+type AuthState = { user: User | null; isAdmin: boolean; loading: boolean };
+const AuthCtx = createContext<AuthState>({ user: null, isAdmin: false, loading: true });
+
+/**
+ * Cart types and context
+ */
+export type CartItem = {
   product_id: string;
   name: string;
   price: number;
   image_url?: string;
   stock: number;
-  qty: number;
-}
+  quantity: number;
+};
 
-interface CartCtx {
+type CartState = {
   items: CartItem[];
-  add: (p: Omit<CartItem, "qty">, q?: number) => void;
+  add: (i: Omit<CartItem, "quantity">, q?: number) => void;
+  setQty: (id: string, q: number) => void;
   remove: (id: string) => void;
-  update: (id: string, q: number) => void;
   clear: () => void;
-  total: number;
-}
+  count: number;
+  subtotal: number;
+};
 
-const CartContext = createContext<CartCtx | null>(null);
+const CartCtx = createContext<CartState | null>(null);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(() => {
+/**
+ * StoreProvider: provides both auth and cart contexts.
+ * - Reads cart from localStorage on startup
+ * - Persists cart to localStorage after changes
+ * - Subscribes to Supabase auth state and updates auth
+ * - Cleans up supabase subscription defensively
+ */
+export function StoreProvider({ children }: { children: ReactNode }) {
+  const [auth, setAuth] = useState<AuthState>({ user: null, isAdmin: false, loading: true });
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [cartLoaded, setCartLoaded] = useState(false);
+
+  // Load auth and cart on startup, subscribe to auth changes
+  useEffect(() => {
+    let mounted = true;
+
+    const loadAuth = async (user: User | null) => {
+      let isAdmin = false;
+      if (user) {
+        try {
+          const { data } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("role", "admin");
+          isAdmin = !!data?.length;
+        } catch {
+          isAdmin = false;
+        }
+      }
+      if (mounted) setAuth({ user, isAdmin, loading: false });
+    };
+
+    // initial getUser
+    supabase.auth.getUser().then(({ data }) => loadAuth(data?.user ?? null)).catch(() => loadAuth(null));
+
+    // subscribe to auth changes
+    const resp = supabase.auth.onAuthStateChange((_event, session) => {
+      loadAuth(session?.user ?? null);
+    });
+
+    // load cart from localStorage (defensive)
     try {
-      return JSON.parse(localStorage.getItem("cart") || "[]");
+      const raw = localStorage.getItem("cart");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setItems(parsed);
+        }
+      }
     } catch {
-      return [];
+      // ignore parse/localStorage errors
     }
-  });
 
-  useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(items));
-  }, [items]);
+    setCartLoaded(true);
 
-  useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange(() => {});
+    // cleanup
     return () => {
+      mounted = false;
       try {
-        sub?.subscription?.unsubscribe?.();
+        if (resp && typeof (resp as any).data === "object") {
+          try {
+            (resp as any).data?.subscription?.unsubscribe?.();
+          } catch {
+            // second-layer guard
+          }
+        } else if (resp && typeof (resp as any).unsubscribe === "function") {
+          try {
+            (resp as any).unsubscribe();
+          } catch {}
+        }
       } catch {
-        // Safe fallback
+        // swallow any cleanup error
       }
     };
   }, []);
 
-  const add = (p: Omit<CartItem, "qty">, q = 1) => {
-    setItems((prev) => {
-      const ex = prev.find((i) => i.product_id === p.product_id);
+  // persist cart when changed and initial load done
+  useEffect(() => {
+    if (!cartLoaded) return;
+    try {
+      localStorage.setItem("cart", JSON.stringify(items));
+    } catch {
+      // ignore storage errors
+    }
+  }, [items, cartLoaded]);
+
+  // cart operations
+  const add = (p: Omit<CartItem, "quantity">, q = 1) => {
+    setItems((current) => {
+      const ex = current.find((x) => x.product_id === p.product_id);
       if (ex) {
-        return prev.map((i) =>
-          i.product_id === p.product_id
-            ? { ...i, qty: Math.min(i.stock, i.qty + q) }
-            : i
+        return current.map((x) =>
+          x.product_id === p.product_id ? { ...x, quantity: Math.min(x.quantity + q, p.stock) } : x
         );
       }
-      return [...prev, { ...p, qty: Math.min(p.stock, q) }];
+      return [...current, { ...p, quantity: Math.min(q, p.stock) }];
     });
   };
 
-  const remove = (id: string) =>
-    setItems((prev) => prev.filter((i) => i.product_id !== id));
-
-  const update = (id: string, q: number) =>
-    setItems((prev) =>
-      prev
-        .map((i) => (i.product_id === id ? { ...i, qty: Math.min(i.stock, q) } : i))
-        .filter((i) => i.qty > 0)
+  const setQty = (id: string, q: number) =>
+    setItems((current) =>
+      current
+        .map((x) => (x.product_id === id ? { ...x, quantity: Math.max(1, Math.min(q, x.stock)) } : x))
+        .filter((x) => x.quantity > 0)
     );
 
+  const remove = (id: string) => setItems((current) => current.filter((x) => x.product_id !== id));
   const clear = () => setItems([]);
 
-  const total = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const count = items.reduce((a, b) => a + b.quantity, 0);
+  const subtotal = items.reduce((a, b) => a + b.quantity * b.price, 0);
+
+  const cart: CartState = { items, add, setQty, remove, clear, count, subtotal };
 
   return (
-    <CartContext.Provider value={{ items, add, remove, update, clear, total }}>
-      {children}
-    </CartContext.Provider>
+    <AuthCtx.Provider value={auth}>
+      <CartCtx.Provider value={cart}>{children}</CartCtx.Provider>
+    </AuthCtx.Provider>
   );
 }
 
+/**
+ * Hooks for consuming contexts
+ */
+export const useAuth = () => useContext(AuthCtx);
 export const useCart = () => {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error("useCart must be inside CartProvider");
+  const ctx = useContext(CartCtx);
+  if (!ctx) throw new Error("useCart must be used within StoreProvider");
   return ctx;
 };
-                        
+      
