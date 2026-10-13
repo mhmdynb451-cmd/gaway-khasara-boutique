@@ -33,11 +33,19 @@ jobs:
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
 
-      - name: Build Web Assets & Sync Capacitor
+      - name: Build web assets (production)
         run: |
           npm run build
+
+      - name: Copy web assets into Android assets and sync Capacitor
+        run: |
+          # ensure target dir exists
+          mkdir -p android/app/src/main/assets/public
+          # copy dist -> Android public (rsync keeps deletions in sync)
+          rsync -a --delete dist/ android/app/src/main/assets/public/
+          # update native plugins/config (will generate capacitor config under android assets if needed)
           npx cap sync android
 
       - name: Build Debug APK
