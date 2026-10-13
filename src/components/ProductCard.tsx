@@ -1,33 +1,65 @@
 import { Link } from "@tanstack/react-router";
-import { toast } from "sonner";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { formatEGP } from "@/lib/pricing";
+import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/lib/store";
+import { normalizeAssetPath } from "@/lib/assetPath";
 
-export type Product = {
-  id: string; name: string; price: number; compare_price: number | null; stock: number; image_url: string; is_demo: boolean; description?: string; category_id?: string | null;
-};
+interface ProductCardProps {
+  p: {
+    id: string;
+    name: string;
+    price: number;
+    image_url?: string | null;
+  };
+}
 
-export function ProductCard({ p }: { p: Product }) {
-  const cart = useCart();
-  const out = p.stock <= 0;
+export function ProductCard({ p }: ProductCardProps) {
+  const { addItem } = useCart();
+
   return (
-    <div className="group flex flex-col overflow-hidden rounded-lg border bg-card shadow-card">
-      <Link to="/product/$id" params={{ id: p.id }} className="relative aspect-square overflow-hidden bg-muted">
-        {p.image_url && <img src={p.image_url} alt={p.name} loading="lazy" className="size-full object-cover transition-transform group-hover:scale-105" />}
-        {p.is_demo && <span className="absolute top-2 right-2 rounded bg-gold-soft px-2 py-0.5 text-xs text-accent-foreground">تجريبي</span>}
-        {out && <span className="absolute inset-x-0 bottom-0 bg-destructive/90 py-1 text-center text-xs text-destructive-foreground">نفد المخزون</span>}
-      </Link>
-      <div className="flex flex-1 flex-col gap-2 p-3">
-        <Link to="/product/$id" params={{ id: p.id }} className="line-clamp-1 font-medium">{p.name}</Link>
-        <div className="flex items-baseline gap-2">
-          <span className="font-bold text-primary">{formatEGP(p.price)}</span>
-          {p.compare_price && <span className="text-xs text-muted-foreground line-through">{formatEGP(p.compare_price)}</span>}
+    <Card className="group overflow-hidden rounded-lg shadow-card transition-shadow hover:shadow-lg">
+      <Link to="/product/$id" params={{ id: p.id }} className="block">
+        <div className="relative aspect-square overflow-hidden bg-muted">
+          {p.image_url ? (
+            <img
+              src={normalizeAssetPath(p.image_url)}
+              alt={p.name}
+              loading="lazy"
+              className="size-full object-cover transition-transform group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex size-full items-center justify-center text-muted-foreground">
+              لا توجد صورة
+            </div>
+          )}
         </div>
-        <Button size="sm" className="mt-auto" disabled={out} onClick={() => { cart.add({ product_id: p.id, name: p.name, price: Number(p.price), image_url: p.image_url, stock: p.stock }); toast.success("أضيف إلى السلة"); }}>
-          {out ? "غير متوفر" : "أضف للسلة"}
-        </Button>
-      </div>
-    </div>
+      </Link>
+      <CardContent className="p-3">
+        <Link to="/product/$id" params={{ id: p.id }} className="block">
+          <h3 className="line-clamp-1 text-sm font-medium text-foreground hover:text-primary">
+            {p.name}
+          </h3>
+        </Link>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="font-bold text-primary">{p.price} ج.م</span>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="size-8 text-primary hover:bg-primary hover:text-primary-foreground"
+            onClick={() =>
+              addItem({
+                id: p.id,
+                name: p.name,
+                price: p.price,
+                image_url: p.image_url ?? undefined,
+              })
+            }
+          >
+            <ShoppingCart className="size-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
