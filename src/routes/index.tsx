@@ -19,19 +19,37 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  const cats = useQuery({ queryKey: ["categories"], queryFn: async () => (await supabase.from("categories").select("*").eq("active", true).order("sort_order")).data ?? [] });
-  const prods = useQuery({ queryKey: ["products", "latest"], queryFn: async () => (await supabase.from("products").select("*").eq("active", true).order("created_at", { ascending: false }).limit(8)).data ?? [] });
+  const cats = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => (await supabase.from("categories").select("*").eq("active", true).order("sort_order")).data ?? [],
+  });
+
+  const prods = useQuery({
+    queryKey: ["products", "latest"],
+    queryFn: async () => (await supabase.from("products").select("*").eq("active", true).order("created_at", { ascending: false }).limit(8)).data ?? [],
+  });
+
   return (
     <>
       <section className="relative overflow-hidden">
-        <img src={normalizeAssetPath("images/hero.jpg")} alt="هدايا مغلفة باللون الكحلي والذهبي" width={1600} height={912} className="absolute inset-0 size-full object-cover" />
-        <div className="absolute inset-0 bg-primary/70" />
-        <div className="relative mx-auto max-w-6xl px-4 py-20 text-primary-foreground md:py-32">
+        {/* Background image: absolute full-bleed but responsive */}
+        <div className="absolute inset-0">
+          <img
+            src={normalizeAssetPath("images/hero.jpg")}
+            alt="هدايا مغلفة باللون الكحلي والذهبي"
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div className="absolute inset-0 bg-primary/70 z-10" />
+
+        <div className="relative z-20 mx-auto max-w-6xl px-4 py-20 text-primary-foreground md:py-32">
           <p className="text-gold">أهلاً بك في</p>
           <h1 className="mt-2 text-4xl md:text-6xl">بيت الهدايا غاوي خسارة</h1>
           <div className="gold-rule mt-4" />
           <p className="mt-4 max-w-lg text-lg opacity-90">كل ما تحتاجه من ملابس وأحذية والهدايا ومستلزمات العرائس والمدارس والمنزل في مكان واحد.</p>
-          <Button asChild variant="gold" size="lg" className="mt-6"><Link to="/search" search={{ q: "" }}>تسوّق الآن</Link></Button>
+          <Button asChild variant="gold" size="lg" className="mt-6">
+            <Link to="/search" search={{ q: "" }}>تسوّق الآن</Link>
+          </Button>
         </div>
       </section>
 
@@ -47,9 +65,11 @@ function Home() {
         <h2 className="text-2xl text-primary">الأقسام</h2>
         <div className="gold-rule mt-2 mb-6" />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-          {cats.data?.map((c) => (
+          {cats.data?.map((c: any) => (
             <Link key={c.id} to="/category/$slug" params={{ slug: c.slug }} className="group relative aspect-[4/3] overflow-hidden rounded-lg shadow-card">
-              {c.image_url && <img src={normalizeAssetPath(c.image_url)} alt={c.name} loading="lazy" className="size-full object-cover transition-transform group-hover:scale-105" />}
+              {c.image_url && (
+                <img src={normalizeAssetPath(c.image_url)} alt={c.name} loading="lazy" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-primary/90 to-transparent" />
               <span className="absolute bottom-3 right-3 font-heading text-lg text-primary-foreground">{c.name}</span>
             </Link>
@@ -61,10 +81,9 @@ function Home() {
         <h2 className="text-2xl text-primary">وصل حديثًا</h2>
         <div className="gold-rule mt-2 mb-6" />
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {prods.data?.map((p) => <ProductCard key={p.id} p={p} />)}
+          {prods.data?.map((p: any) => <ProductCard key={p.id} p={p} />)}
         </div>
       </section>
     </>
   );
-          }
-        
+}
