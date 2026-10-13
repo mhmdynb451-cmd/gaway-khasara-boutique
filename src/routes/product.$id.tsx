@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { formatEGP } from "@/lib/pricing";
 import { useCart } from "@/lib/store";
+import { normalizeAssetPath } from "@/lib/assetPath";
 
 export const Route = createFileRoute("/product/$id")({
   head: () => ({
@@ -30,7 +31,7 @@ function ProductPage() {
   return (
     <div className="mx-auto grid max-w-5xl gap-8 px-4 py-8 md:grid-cols-2">
       <div className="aspect-square overflow-hidden rounded-lg bg-muted shadow-card">
-        {p.image_url && <img src={p.image_url} alt={p.name} className="size-full object-cover" />}
+        {p.image_url && <img src={normalizeAssetPath(p.image_url)} alt={p.name} className="size-full object-cover" />}
       </div>
       <div>
         {p.categories && <Link to="/category/$slug" params={{ slug: p.categories.slug }} className="text-sm text-gold">{p.categories.name}</Link>}
@@ -49,10 +50,12 @@ function ProductPage() {
               <span className="w-8 text-center">{qty}</span>
               <button className="px-3 py-2" onClick={() => setQty(Math.max(1, qty - 1))}>−</button>
             </div>
-            <Button size="lg" onClick={() => { cart.add({ product_id: p.id, name: p.name, price: Number(p.price), image_url: p.image_url, stock: p.stock }, qty); toast.success("أضيف إلى السلة"); }}>أضف للسلة</Button>
+            <Button size="lg" onClick={() => { cart.add({ product_id: p.id, name: p.name, price: Number(p.price), image_url: p.image_url, stock: p.stock }, qty); toast.success("أضيف إلى السلة"); }}>
+              أضف للسلة
+            </Button>
           </div>
         )}
       </div>
     </div>
   );
-}
+      }
