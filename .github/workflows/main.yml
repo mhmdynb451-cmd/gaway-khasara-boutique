@@ -19,9 +19,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -63,8 +60,27 @@ jobs:
       - name: Sync Capacitor Android
         run: npx cap sync android
 
-      - name: Accept Android Licenses
-        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+      - name: Setup Android SDK (non-interactive)
+        run: |
+          set -euo pipefail
+
+          SDK_ROOT="${RUNNER_TOOL_CACHE}/android-sdk"
+          mkdir -p "${SDK_ROOT}"
+          echo "ANDROID_SDK_ROOT=${SDK_ROOT}" >> $GITHUB_ENV
+          echo "ANDROID_HOME=${SDK_ROOT}" >> $GITHUB_ENV
+
+          TMP_ZIP="/tmp/cmdline-tools.zip"
+          curl -fSL "https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip" -o "${TMP_ZIP}"
+          mkdir -p "${SDK_ROOT}/cmdline-tools/latest"
+          unzip -q "${TMP_ZIP}" -d "${SDK_ROOT}/cmdline-tools/latest"
+          rm -f "${TMP_ZIP}"
+
+          echo "PATH=${SDK_ROOT}/cmdline-tools/latest/cmdline-tools/bin:${SDK_ROOT}/platform-tools:${PATH}" >> $GITHUB_ENV
+          export PATH="${SDK_ROOT}/cmdline-tools/latest/cmdline-tools/bin:${SDK_ROOT}/platform-tools:${PATH}"
+
+          yes | sdkmanager --sdk_root="${SDK_ROOT}" --licenses || true
+          yes | sdkmanager --sdk_root="${SDK_ROOT}" "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+        shell: bash
 
       - name: Build Android APK
         run: |
