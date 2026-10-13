@@ -25,8 +25,18 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Install Dependencies
-        run: npm ci
+      - name: Install dependencies (resilient)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ] || [ -f yarn.lock ]; then
+            echo "Lockfile detected; running 'npm ci' for deterministic install"
+            npm ci --legacy-peer-deps
+          else
+            echo "No lockfile found; running 'npm install' (non-deterministic) as a fallback"
+            npm install --legacy-peer-deps
+          fi
 
       - name: Build Web App
         run: npm run build
