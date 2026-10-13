@@ -4,6 +4,7 @@ import { Truck, ShieldCheck, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductCard } from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
+import { normalizeAssetPath } from "@/lib/assetPath";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,7 +24,7 @@ function Home() {
   return (
     <>
       <section className="relative overflow-hidden">
-        <img src="/images/hero.jpg" alt="هدايا مغلفة باللون الكحلي والذهبي" width={1600} height={912} className="absolute inset-0 size-full object-cover" />
+        <img src={normalizeAssetPath("images/hero.jpg")} alt="هدايا مغلفة باللون الكحلي والذهبي" width={1600} height={912} className="absolute inset-0 size-full object-cover" />
         <div className="absolute inset-0 bg-primary/70" />
         <div className="relative mx-auto max-w-6xl px-4 py-20 text-primary-foreground md:py-32">
           <p className="text-gold">أهلاً بك في</p>
@@ -48,7 +49,7 @@ function Home() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {cats.data?.map((c) => (
             <Link key={c.id} to="/category/$slug" params={{ slug: c.slug }} className="group relative aspect-[4/3] overflow-hidden rounded-lg shadow-card">
-              {c.image_url && <img src={c.image_url} alt={c.name} loading="lazy" className="size-full object-cover transition-transform group-hover:scale-105" />}
+              {c.image_url && <img src={normalizeAssetPath(c.image_url)} alt={c.name} loading="lazy" className="size-full object-cover transition-transform group-hover:scale-105" />}
               <div className="absolute inset-0 bg-gradient-to-t from-primary/90 to-transparent" />
               <span className="absolute bottom-3 right-3 font-heading text-lg text-primary-foreground">{c.name}</span>
             </Link>
@@ -65,4 +66,4 @@ function Home() {
       </section>
     </>
   );
-}
+              }
