@@ -61,12 +61,12 @@ jobs:
           echo "Inspecting first 120 lines of index.html..."
           sed -n '1,120p' "$TARGET/index.html"
           echo "Looking for absolute root asset paths (href=\"/ or src=\"/) in index.html..."
-          if grep -nE 'href="/|src="/' "$TARGET/index.html"; then
+          if grep -nE 'href=\"/|src=\"/' "$TARGET/index.html"; then
             echo "ERROR: Found absolute root asset path(s) in index.html — convert them to relative paths or ensure vite base is './'"
             exit 1
           fi
           echo "Ensuring assets directory exists and contains files..."
-          if [ ! -d "$TARGET/assets" ] || [ -z "$(ls -A $TARGET/assets 2>/dev/null)" ]; then
+          if [ ! -d "$TARGET/assets" ] || [ -z "$(ls -A "$TARGET/assets" 2>/dev/null)" ]; then
             echo "ERROR: assets/ missing or empty in $TARGET"
             ls -la "$TARGET"
             exit 1
@@ -81,7 +81,7 @@ jobs:
           done
           if [ -f android/app/src/main/assets/capacitor.config.json ]; then
             echo "Checking generated capacitor config for server.url ..."
-            if grep -q '"server"' android/app/src/main/assets/capacitor.config.json; then
+            if grep -q '\"server\"' android/app/src/main/assets/capacitor.config.json; then
               echo "ERROR: Found a server block in generated capacitor.config.json — remove server.url from source capacitor.config.ts and re-run cap sync"
               exit 1
             fi
