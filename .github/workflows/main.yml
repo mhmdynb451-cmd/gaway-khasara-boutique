@@ -69,7 +69,8 @@ jobs:
       - name: Sync Capacitor Android
         run: npx cap sync android
 
-      - name: Setup Android SDK (non-interactive)
+      - name: Setup Android SDK (non-interactive, robust license accept)
+        shell: bash
         run: |
           set -euo pipefail
 
@@ -78,18 +79,39 @@ jobs:
           echo "ANDROID_SDK_ROOT=${SDK_ROOT}" >> $GITHUB_ENV
           echo "ANDROID_HOME=${SDK_ROOT}" >> $GITHUB_ENV
 
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq unzip expect
+
           TMP_ZIP="/tmp/cmdline-tools.zip"
           curl -fSL "https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip" -o "${TMP_ZIP}"
           mkdir -p "${SDK_ROOT}/cmdline-tools/latest"
           unzip -q "${TMP_ZIP}" -d "${SDK_ROOT}/cmdline-tools/latest"
           rm -f "${TMP_ZIP}"
 
-          echo "PATH=${SDK_ROOT}/cmdline-tools/latest/cmdline-tools/bin:${SDK_ROOT}/platform-tools:${PATH}" >> $GITHUB_ENV
           export PATH="${SDK_ROOT}/cmdline-tools/latest/cmdline-tools/bin:${SDK_ROOT}/platform-tools:${PATH}"
 
-          yes | sdkmanager --sdk_root="${SDK_ROOT}" --licenses || true
-          yes | sdkmanager --sdk_root="${SDK_ROOT}" "platform-tools" "platforms;android-33" "build-tools;33.0.2"
-        shell: bash
+          yes | sdkmanager --sdk_root="${SDK_ROOT}" "platform-tools" "platforms;android-33" "build-tools;33.0.2" || true
+
+          cat > /tmp/accept-android-licenses.exp <<'EXPECT'
+          #!/usr/bin/expect -f
+          set timeout -1
+          set sdkroot [lindex $argv 0]
+          set cmd [list [file join $sdkroot "cmdline-tools" "latest" "cmdline-tools" "bin" "sdkmanager"] "--sdk_root=${sdkroot}" "--licenses"]
+          spawn {*}$cmd
+          expect {
+            eof { exit 0 }
+            -re ".*" {
+              send "y\r"
+              exp_continue
+            }
+          }
+          EXPECT
+          chmod +x /tmp/accept-android-licenses.exp
+
+          /tmp/accept-android-licenses.exp "${SDK_ROOT}"
+          sdkmanager --sdk_root="${SDK_ROOT}" --list_installed
+        env:
+          DEBIAN_FRONTEND: noninteractive
 
       - name: Build Android APK
         run: |
