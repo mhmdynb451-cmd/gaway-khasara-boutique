@@ -10,21 +10,21 @@ export function ProductCard({ p }: { p: any }) {
   const out = p.stock <= 0;
 
   return (
-    <div className="group overflow-hidden rounded-lg border bg-card transition hover:shadow-gold">
-      <Link to="/product/$id" params={{ id: p.id }} className="block aspect-square overflow-hidden bg-muted">
+    <div className="group w-full overflow-hidden rounded-lg border bg-card transition hover:shadow-gold">
+      <Link to="/product/$id" params={{ id: p.id }} className="block aspect-square w-full overflow-hidden bg-muted">
         {p.image_url && (
           <img
             src={normalizeAssetPath(p.image_url)}
             alt={p.name}
-            className="size-full object-cover transition duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover transition duration-300 group-hover:scale-105"
           />
         )}
       </Link>
       <div className="p-4">
-        <Link to="/product/$id" params={{ id: p.id }} className="font-semibold text-primary hover:text-gold">
+        <Link to="/product/$id" params={{ id: p.id }} className="block font-semibold text-primary hover:text-gold line-clamp-2">
           {p.name}
         </Link>
-        <div className="mt-2 flex items-center justify-between">
+        <div className="mt-2 flex items-center justify-between gap-2">
           <span className="font-bold">{formatEGP(p.price)}</span>
           <Button
             size="sm"
