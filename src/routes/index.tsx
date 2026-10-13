@@ -30,7 +30,7 @@ function Home() {
           <p className="text-gold">أهلاً بك في</p>
           <h1 className="mt-2 text-4xl md:text-6xl">بيت الهدايا غاوي خسارة</h1>
           <div className="gold-rule mt-4" />
-          <p className="mt-4 max-w-lg text-lg opacity-90">كل ما تحتاجه من ملابس وأحذية وهدايا ومستلزمات العرائس والمدارس والمنزل في مكان واحد.</p>
+          <p className="mt-4 max-w-lg text-lg opacity-90">كل ما تحتاجه من ملابس وأحذية والهدايا ومستلزمات العرائس والمدارس والمنزل في مكان واحد.</p>
           <Button asChild variant="gold" size="lg" className="mt-6"><Link to="/search" search={{ q: "" }}>تسوّق الآن</Link></Button>
         </div>
       </section>
@@ -66,4 +66,5 @@ function Home() {
       </section>
     </>
   );
-              }
+          }
+        
