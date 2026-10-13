@@ -1,90 +1,88 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import type { User } from "@supabase/supabase-js";
+import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-type AuthState = { user: User | null; isAdmin: boolean; loading: boolean };
-const AuthCtx = createContext<AuthState>({ user: null, isAdmin: false, loading: true });
+export interface CartItem {
+  product_id: string;
+  name: string;
+  price: number;
+  image_url?: string;
+  stock: number;
+  qty: number;
+}
 
-export type CartItem = { product_id: string; name: string; price: number; image_url: string; quantity: number; stock: number };
-type CartState = {
+interface CartCtx {
   items: CartItem[];
-  add: (i: Omit<CartItem, "quantity">, q?: number) => void;
-  setQty: (id: string, q: number) => void;
+  add: (p: Omit<CartItem, "qty">, q?: number) => void;
   remove: (id: string) => void;
+  update: (id: string, q: number) => void;
   clear: () => void;
-  count: number;
-  subtotal: number;
-};
-const CartCtx = createContext<CartState | null>(null);
+  total: number;
+}
 
-export function StoreProvider({ children }: { children: ReactNode }) {
-  const [auth, setAuth] = useState<AuthState>({ user: null, isAdmin: false, loading: true });
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [cartLoaded, setCartLoaded] = useState(false);
+const CartContext = createContext<CartCtx | null>(null);
+
+export function CartProvider({ children }: { children: React.ReactNode }) {
+  const [items, setItems] = useState<CartItem[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("cart") || "[]");
+    } catch {
+      return [];
+    }
+  });
 
   useEffect(() => {
-    const load = async (user: User | null) => {
-      let isAdmin = false;
-      if (user) {
-        const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin");
-        isAdmin = !!data?.length;
+    localStorage.setItem("cart", JSON.stringify(items));
+  }, [items]);
+
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange(() => {});
+    return () => {
+      try {
+        sub?.subscription?.unsubscribe?.();
+      } catch {
+        // Safe fallback
       }
-      setAuth({ user, isAdmin, loading: false });
     };
-    supabase.auth.getUser().then(({ data }) => load(data.user));
-    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") load(session?.user ?? null);
-    });
-    try {
-      const raw = localStorage.getItem("cart");
-      if (raw) {
-        const parsed: unknown = JSON.parse(raw);
-        if (Array.isArray(parsed)) setItems(parsed);
-      }
-    } catch {}
-    setCartLoaded(true);
-    return () => sub.subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (!cartLoaded) return;
-    try { localStorage.setItem("cart", JSON.stringify(items)); } catch {}
-  }, [items, cartLoaded]);
-
-  const cart: CartState = {
-    items,
-    add: (i, q = 1) => {
-      setItems((current) => {
-        const ex = current.find((x) => x.product_id === i.product_id);
-        if (ex) return current.map((x) => x.product_id === i.product_id ? { ...x, quantity: Math.min(x.quantity + q, i.stock) } : x);
-        return [...current, { ...i, quantity: Math.min(q, i.stock) }];
-      });
-    },
-    setQty: (id, q) => setItems((current) => current.map((x) => (x.product_id === id ? { ...x, quantity: Math.max(1, Math.min(q, x.stock)) } : x))),
-    remove: (id) => setItems((current) => current.filter((x) => x.product_id !== id)),
-    clear: () => setItems([]),
-    count: items.reduce((a, b) => a + b.quantity, 0),
-    subtotal: items.reduce((a, b) => a + b.quantity * b.price, 0),
+  const add = (p: Omit<CartItem, "qty">, q = 1) => {
+    setItems((prev) => {
+      const ex = prev.find((i) => i.product_id === p.product_id);
+      if (ex) {
+        return prev.map((i) =>
+          i.product_id === p.product_id
+            ? { ...i, qty: Math.min(i.stock, i.qty + q) }
+            : i
+        );
+      }
+      return [...prev, { ...p, qty: Math.min(p.stock, q) }];
+    });
   };
 
+  const remove = (id: string) =>
+    setItems((prev) => prev.filter((i) => i.product_id !== id));
+
+  const update = (id: string, q: number) =>
+    setItems((prev) =>
+      prev
+        .map((i) => (i.product_id === id ? { ...i, qty: Math.min(i.stock, q) } : i))
+        .filter((i) => i.qty > 0)
+    );
+
+  const clear = () => setItems([]);
+
+  const total = items.reduce((s, i) => s + i.price * i.qty, 0);
+
   return (
-    <AuthCtx.Provider value={auth}>
-      <CartCtx.Provider value={cart}>{children}</CartCtx.Provider>
-    </AuthCtx.Provider>
+    <CartContext.Provider value={{ items, add, remove, update, clear, total }}>
+      {children}
+    </CartContext.Provider>
   );
 }
 
-export const useAuth = () => useContext(AuthCtx);
 export const useCart = () => {
-  const cart = useContext(CartCtx);
-  if (!cart) throw new Error("Cart requires StoreProvider");
-  return cart;
+  const ctx = useContext(CartContext);
+  if (!ctx) throw new Error("useCart must be inside CartProvider");
+  return ctx;
 };
-
-export const ORDER_STATUS: Record<string, string> = {
-  new: "جديد", confirmed: "تم التأكيد", shipped: "تم الشحن", delivered: "تم التسليم", cancelled: "ملغي",
-};
-export const PAYMENT_STATUS: Record<string, string> = {
-  pending: "بانتظار الدفع", awaiting_verification: "بانتظار التحقق", verified: "تم التحقق", failed: "مرفوض",
-};
-export const PAYMENT_METHOD: Record<string, string> = { cod: "الدفع عند الاستلام", vodafone: "فودافون كاش", visa: "فيزا" };
+                        
