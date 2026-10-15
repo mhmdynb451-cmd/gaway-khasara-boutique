@@ -5,6 +5,10 @@ const config: CapacitorConfig = {
   appName: "بيت الهدايا",
   webDir: "dist",
   android: { allowMixedContent: false },
+  server: {
+    url: "https://project-066482.lovable.app",
+    cleartext: true,
+  },
 };
 
 export default config;
